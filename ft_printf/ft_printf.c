@@ -5,13 +5,13 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: emamati <emamati@student.42istanbul.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/16 16:16:27 by emamati           #+#    #+#             */
-/*   Updated: 2023/12/16 17:39:42 by emamati          ###   ########.fr       */
+/*   Created: 2023/12/26 15:22:57 by emamati           #+#    #+#             */
+/*   Updated: 2023/12/26 17:27:24 by emamati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft/libft.h"
 #include "ft_printf.h"
+#include "libft/libft.h"
 #include <stdarg.h>
 
 int	type_handler(char type, va_list input, char flags, int arg)
@@ -24,87 +24,75 @@ int	type_handler(char type, va_list input, char flags, int arg)
 	else if (type == 'd' || type == 'i')
 		len += ft_putnbr_long(va_arg(input, int), flags, arg);
 	else if (type == 'p')
-	{
-		len += write(1, "0x", 2);
-		len += type_hex(va_arg(input, unsigned long), "0123456789abcdefg", flags, type, arg);
-	}
+		len += type_hex(va_arg(input, unsigned long), flags, type, arg);
 	else if (type == '%')
 		len += write(1, "%%", 1);
 	else if (type == 'x')
-		len += type_hex(va_arg(input, unsigned int), "0123456789abcdefg", flags, type, arg);
+		len += type_hex(va_arg(input, unsigned int), flags, type, arg);
 	else if (type == 'u' || type == 'U')
 		len += ft_putnbr_long(va_arg(input, unsigned int), flags, arg);
 	else if (type == 'X')
-		len += type_hex(va_arg(input, unsigned int), "0123456789ABCDEFG", flags, type, arg);
+		len += type_hex(va_arg(input, unsigned int), flags, type, arg);
 	else if (type == 'c')
 		len += type_c(va_arg(input, int), flags, type, arg);
 	else if (type == 's')
-		 len += type_s(va_arg(input, char *), flags, type, arg);
+		len += type_s(va_arg(input, char *), flags, type, arg);
 	return (len);
 }
 
-int	flag_handler(char c, unsigned char flags) 
+int	flag_handler(char c, unsigned char flags)
 {
-	char init;
+	if (c == '.')
+		flags |= 1 << 5;
+	if (c == '+')
+		flags |= 1 << 4;
+	if (c == '#')
+		flags |= 1 << 3;
+	if (c == ' ')
+		flags |= 1 << 2;
+	if (c == '0')
+		flags |= 1 << 1;
+	if (c == '-')
+		flags |= 1 << 0;
+	return (flags);
+}
 
-	init = flags;
-	if (flags >= 16)
-		flags -= 16;
-	else if (c == '+')
-		init += 16;
-	if (flags >= 8)
-		flags -= 8;
-	else if (c == '#')
-		init += 8;
-	if (flags >= 4)
-		flags -= 4;
-	else if (c == ' ')
-		init += 4;
-	if (flags >= 2)
-		flags -= 2;
-	else if (c == '0')
-		init += 2;
-	if (flags >= 1)
-		flags -= 1;
-	else if (c == '-')
-		init += 1;
-	return (init);
+t_FormatInfo	parse_format(const char **args)
+{
+	t_FormatInfo	info;
+
+	info.arg = 0;
+	info.flags = 0;
+	while (!ft_isalpha((*args)[1]) && (*args)[1] != '%')
+	{
+		info.flags = flag_handler((*args)[1], info.flags);
+		if (ft_isalnum((*args)[1]))
+			info.arg = info.arg * 10 + (*args)[1] - '0';
+		(*args)++;
+	}
+	return (info);
 }
 
 int	ft_printf(const char *args, ...)
 {
-	char	type;
-	int		j;
-	va_list	input;
-	int		len;
-	char	flags;
-	int	arg;
+	va_list			input;
+	int				len;
+	t_FormatInfo	info;
 
 	len = 0;
 	va_start(input, args);
-	j = 0;
-	while (args[j])
+	while (*args)
 	{
-		if (args[j] == '%')
+		if (*args == '%')
 		{
-			flags = 0;
-			arg = 0;
-			while (!ft_isalpha(args[j + 1]) && args[j + 1] != '%')
-			{
-				flags = flag_handler(args[j + 1], flags);
-				if (ft_isalnum(args[j + 1]))
-					arg = arg * 10 + args[j + 1] - '0';
-				j++;
-			}
-			type = args[j + 1];
-			len += type_handler(type, input, flags, arg);
-			j++;
+			info = parse_format(&args);
+			len += type_handler(args[1], input, info.flags, info.arg);
+			args++;
 		}
 		else
-			len += write(1, &args[j], 1);
-		j++;
+			len += write(1, args, 1);
+		args++;
 	}
 	va_end(input);
 	return (len);
 }
-
