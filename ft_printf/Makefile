@@ -1,23 +1,28 @@
-NAME = libftprintf.a
 CC = gcc
-FLAGS = -Wall -Werror -Wextra
-SRCS = ft_printf.c put.c helper_funcs.c libft/ft_isalpha.c libft/ft_isalnum.c
+SRCS = ft_printf.c put.c helper_funcs.c libft/ft_isalpha.c libft/ft_isalnum.c libft/ft_bzero.c libft/ft_isdigit.c hex_len.c
 OBJS = ${SRCS:.c=.o}
+NAME = libftprintf.a
+LIBC = ar rcs
+RM = rm -f
+CFLAGS = -Wall -Wextra -Werror
 
 all: ${NAME}
 
-${NAME}: ${OBJS}
-	ar -rcs ${NAME} ${OBJS}
+.c.o:
+	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
 
-bonus: ${NAME}
-	ar -rcs ${NAME} ${OBJS}
+${NAME}: ${OBJS}
+	${LIBC} ${NAME} ${OBJS}
+
+bonus: ${NAME} ${OBJS}
+		${LIBC} ${NAME} ${OBJS}
 
 clean:
-	rm -rf ${OBJS}
+	${RM} ${OBJS} ${OBJS}
 
 fclean: clean
-	rm -rf ${NAME}
+	${RM} ${NAME} ${bonus}
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY : all bonus clean fclean re
